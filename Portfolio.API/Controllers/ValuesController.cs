@@ -4,37 +4,78 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
+using Portfolio.API.Data;
+using Portfolio.API.Models;
+
 namespace Trinder.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController
+    public class ValuesController : ControllerBase
     {
-        [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
+        private DataContext _context;
+
+        public ValuesController(DataContext context)
         {
-            return new string[]{"value1", "value2"};
+            _context = context;
+        }
+
+        [HttpGet]
+        public IActionResult GetValues()
+        {
+            var values = _context.Values.ToList();
+
+            return Ok(values);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<string> GetAction(int id)
+        public IActionResult GetValue(int id)
         {
-            return("value");
+            var value = _context.Values.FirstOrDefault(x => x.Id == id);
+
+            return Ok(value);
         }
 
         [HttpPost]
-        public void Post([FromBody] string value)
+        public IActionResult AddValue([FromBody] Value value)
         {
+            _context.Values.Add(value);
+            _context.SaveChanges();
+
+            return Ok(value);
         }
 
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public IActionResult EditValue(int id, [FromBody] Value value)
         {
+            var data = _context.Values.Find(id);
+
+            if(data == null)
+            {
+                return NoContent();
+            }
+
+            data.Name = value.Name;
+            _context.Values.Update(data);
+            _context.SaveChanges();
+
+            return Ok(data);
         }
 
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult DeleteValue(int id)
         {
+            var data = _context.Values.Find(id);
+
+            if(data == null)
+            {
+                return NoContent();
+            }
+
+            _context.Values.Remove(data);
+            _context.SaveChanges();
+
+            return Ok(data);
         }
     }
 }
